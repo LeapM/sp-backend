@@ -1,8 +1,6 @@
 
-console.log('call plant');
-import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInterfaceType } from 'graphql'
+import {GraphQLObjectType, GraphQLString,GraphQLList} from 'graphql'
 import {SPFObjType} from './spfobj'
-console.log('plant',SPFObjType);
 export const PlantType = new GraphQLObjectType({
   name: 'PlantType',
   interfaces:[SPFObjType],
@@ -21,9 +19,13 @@ export const PlantType = new GraphQLObjectType({
 		markedforremoval: { type: GraphQLString },
 		description: { type: GraphQLString },
 		spfrevstate: { type: GraphQLString },
-    defaultvault:{
-      type: GraphQLString,
-      resolve(){return "new vault"}
+    status:{
+      type: new GraphQLList(SPFObjType),
+      resolve(data,args,context){
+        return data.getRelatedObj(context,'SPFConfigurationConfigurationStatus')
+        .then((data)=>data)
+        .catch(()=>null);
+      }
     }
   },
   //this functionality is required, or the interface need to implement resolveType method

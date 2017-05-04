@@ -1,5 +1,5 @@
 import sql from 'mssql'
-import { logError } from '../utility'
+import{logError,logDebug} from '../utility'
 let pool;
 async function createPool() {
 	if (!pool) {
@@ -26,13 +26,40 @@ export async function runQuery(query) {
 	}
 }
 
-export async function runQueryByOBID(id) {
+export async function getObjByOBID(id) {
 	try {
     //make sure the database is connected
 	  await getPool();
     const request = new sql.Request();
 		let query = `select * from dataobj where obid = '${id}'`.toString();
 		let data = await request.query(query);
+    return data.recordset;
+	} catch (err) {
+		logError(err);
+	}
+}
+
+export async function getRelatedObjByOBIDAndRelDef(id,reldef) {
+	try {
+    //make sure the database is connected
+	  await getPool();
+    const request = new sql.Request();
+    let startTb = 'dataobj'
+    let startUid = 'uid1';
+    let startDomain = 'domainuid1';
+    let endTb = 'schemaobj'
+    let endUid = 'uid2';
+    let endDomain = 'domainuid2';
+		let query =` 
+    select eo.* 
+    from ${startTb} so, datarel r,${endTb} eo
+    where so.obid = '${id}'
+    and so.objuid = r.${startUid} and so.domainuid = r.${startDomain}
+    and eo.objuid = r.${endUid} and eo.domainuid = r.${endDomain}
+    `.toString();
+    logDebug(query);
+		let data = await request.query(query);
+    logDebug(data);
     return data.recordset;
 	} catch (err) {
 		logError(err);

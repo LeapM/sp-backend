@@ -1,1 +1,1 @@
-export {default as queryschema} from './spfobj.js' 
+export {default as queryschema} from './schema.js' 

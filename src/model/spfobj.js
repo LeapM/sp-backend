@@ -5,8 +5,18 @@ export class SPFObj {
 	constructor(data) {
 		this.obid = data.OBID;
 		this.objuid = data.OBJUID;
+		this.domainuid = data.DOMAINUID;
 		this.objname = data.OBJNAME;
 		this.objdefuid = data.OBJDEFUID;
+		this.config= data.CONFIG;
+		this.creationdate= data.CREATIONDATE;
+		this.lastupdated= data.LASTUPDATED;
+		this.terminationdate = data.TERMINATIONDATE;
+		this.uniquekey = data.UNIQUEKEY;
+		this.claimedtoconfigs= data.CLAIMEDTOCONFIGS;
+		this.markedforremoval= data.MARKEDFORREMOVAL;
+		this.description= data.DESCRIPTION;
+		this.spfrevstate = data.SPFREVSTATE;
 	}
 	static async gen(viewer, id) {
 		try {

@@ -1,1 +1,1 @@
-export {default as queryschema} from './plant.js' 
+export {default as queryschema} from './spfobj.js' 

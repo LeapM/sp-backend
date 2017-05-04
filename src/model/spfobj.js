@@ -1,7 +1,7 @@
-import { runQuery } from '../dal'
+import { runQueryByOBID } from '../dal'
 import{logError} from '../utility'
 
-export class Plant {
+export class SPFObj {
 	constructor(data) {
 		this.obid = data.OBID;
 		this.objuid = data.OBJUID;
@@ -10,17 +10,17 @@ export class Plant {
 	}
 	static async gen(viewer, id) {
 		try {
-			let query = `select * from dataobj where obid = '${id}'`.toString();
-			const data = await runQuery(query)
+			const data = await runQueryByOBID(id)
+			//simulate slow connection
+			//await new Promise((resolve)=>(setTimeout(()=>(resolve()),2000)));
 			if (data === null || data.lenght == 0) return null;
-			const canSee = Plant.checkCanSee(viewer, data);
-			return canSee ? new Plant(data[0]) : null;
+			const canSee = SPFObj.checkCanSee(viewer, data);
+			return canSee ? new SPFObj(data[0]) : null;
 		} catch (err) {
       logError(err);
 			return null;
 		}
 	}
-
 	static checkCanSee(viewer, data) {
 		return true;
 	}

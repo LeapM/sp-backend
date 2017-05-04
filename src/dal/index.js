@@ -25,3 +25,16 @@ export async function runQuery(query) {
 		logError(err);
 	}
 }
+
+export async function runQueryByOBID(id) {
+	try {
+    //make sure the database is connected
+	  await getPool();
+    const request = new sql.Request();
+		let query = `select * from dataobj where obid = '${id}'`.toString();
+		let data = await request.query(query);
+    return data.recordset;
+	} catch (err) {
+		logError(err);
+	}
+}

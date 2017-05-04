@@ -1,10 +1,10 @@
 import sql from 'mssql'
 import chalk from 'chalk'
 import { GraphQLSchema, GraphQLObjectType, GraphQLString } from 'graphql'
-import { Plant } from '../model'
+import { SPFObj } from '../model'
 
-const PlantType = new GraphQLObjectType({
-	name: 'Plant',
+const SPFObjType = new GraphQLObjectType({
+	name: 'SPFObjType',
 	fields: {
 		objuid: { type: GraphQLString }
 	}
@@ -14,10 +14,16 @@ export default new GraphQLSchema({
 	query: new GraphQLObjectType({
 		name: 'RootQueryType',
 		fields: {
-			plant: {
-				type: PlantType,
-				resolve() {
-					return Plant.gen(null, '002OOOA')
+			spfobj: {
+				type: SPFObjType,
+        args:{
+          id:{
+            type: GraphQLString,
+            defaultValue:'002OOOA'
+          }
+        },
+				resolve(parent,{id},context) {
+					return SPFObj.gen(context,id )
 						.then((data) => {
 							return data;
 						});

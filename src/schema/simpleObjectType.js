@@ -27,7 +27,6 @@ export const SimpleObjectType = new GraphQLObjectType({
 				}
 			} ,
 			resolve(parent, {propdefuid}, context) {
-        console.log(propdefuid);
 				return parent.getPropVal(context, propdefuid)
 					.then((data) => data)
 					.catch(() => null);

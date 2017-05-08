@@ -132,9 +132,7 @@ export async function getPropertyByPropDefUID(obid, propDef) {
 			  WHERE p.OBJOBID = '${obid}' and p.PROPERTYDEFUID = '${propDef}'
 				AND TERMINATIONDATE= '9999/12/31-23:59:59:999'
 				`;
-		  console.log(query);
 			let property = await runQuery(query);
-			console.log(property);
 			if (property && property.recordset && property.recordset.length === 1) {
 				return property.recordset[0].STRVALUE
 			}

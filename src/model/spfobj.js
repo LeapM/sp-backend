@@ -23,9 +23,9 @@ export class SPFObj {
 			const data = await getObjByOBID(id)
 			//simulate slow connection
 			//await new Promise((resolve)=>(setTimeout(()=>(resolve()),2000)));
-			if (!data || data.lenght == 0) return null;
+			if (!data) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
-			return canSee ? new SPFObj(data[0]) : null;
+			return canSee ? new SPFObj(data) : null;
 		} catch (err) {
       logError(err);
 			return null;

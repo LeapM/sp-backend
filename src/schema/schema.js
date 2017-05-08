@@ -1,10 +1,10 @@
-import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInterfaceType } from 'graphql'
+import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInterfaceType,GraphQLNonNull} from 'graphql'
 import { SPFObj } from '../model'
 import { SPFObjType } from './spfobj'
-import { PlantType } from './plant'
+import { SimpleObjectType } from './simpleObjectType'
 export default new GraphQLSchema({
 	//types is required to list all possible class implementing interface, maybe for better validating
-	types:[PlantType,SPFObjType],
+	types:[SimpleObjectType,SPFObjType],
 	query: new GraphQLObjectType({
 		name: 'RootQueryType',
 		fields: {
@@ -12,8 +12,8 @@ export default new GraphQLSchema({
 				type: SPFObjType,
         args:{
           id:{
-            type: GraphQLString,
-            defaultValue:'002OOOA'
+            type: new GraphQLNonNull(GraphQLString),
+            //defaultValue:'002OOOA'
           }
         },
 				resolve(parent,{id},context) {

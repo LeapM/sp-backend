@@ -1,5 +1,5 @@
-import { getObjByOBID, getRelatedObjByOBIDAndRelDef} from '../dal'
-import{logError,logDebug} from '../utility'
+import { getObjByOBID, getRelatedObjByOBIDAndRelDef, getPropertyByPropDefUID } from '../dal'
+import { logError, logDebug } from '../utility'
 
 export class SPFObj {
 	constructor(data) {
@@ -8,14 +8,14 @@ export class SPFObj {
 		this.domainuid = data.DOMAINUID;
 		this.objname = data.OBJNAME;
 		this.objdefuid = data.OBJDEFUID;
-		this.config= data.CONFIG;
-		this.creationdate= data.CREATIONDATE;
-		this.lastupdated= data.LASTUPDATED;
+		this.config = data.CONFIG;
+		this.creationdate = data.CREATIONDATE;
+		this.lastupdated = data.LASTUPDATED;
 		this.terminationdate = data.TERMINATIONDATE;
 		this.uniquekey = data.UNIQUEKEY;
-		this.claimedtoconfigs= data.CLAIMEDTOCONFIGS;
-		this.markedforremoval= data.MARKEDFORREMOVAL;
-		this.description= data.DESCRIPTION;
+		this.claimedtoconfigs = data.CLAIMEDTOCONFIGS;
+		this.markedforremoval = data.MARKEDFORREMOVAL;
+		this.description = data.DESCRIPTION;
 		this.spfrevstate = data.SPFREVSTATE;
 	}
 	static async gen(viewer, id) {
@@ -27,20 +27,31 @@ export class SPFObj {
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? new SPFObj(data) : null;
 		} catch (err) {
-      logError(err);
+			logError(err);
 			return null;
 		}
 	}
-	async getRelatedObj(viewer,reldef){
-		try{
-			const data = await getRelatedObjByOBIDAndRelDef(this.obid,reldef);
-			if (!data || data.lenght == 0) return null;
+	async getPropVal(viewer, propdef) {
+		try {
+			const data = await getPropertyByPropDefUID(this.obid, propdef);
+			if (!data) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
-			return canSee ? (()=>(
-				data.map((rec)=>new SPFObj(rec))
-			))() : null;
+			return canSee ? data : null;
+		} catch (err) {
+			logError(err);
+			return null;
 		}
-		catch(err){
+
+	}
+	async getRelatedObj(viewer, reldef) {
+		try {
+			const data = await getRelatedObjByOBIDAndRelDef(this.obid, reldef);
+			if (!data || data.lenghth == 0) return null;
+			const canSee = SPFObj.checkCanSee(viewer, data);
+			return canSee ? (() => (
+				data.map((rec) => new SPFObj(rec))
+			))() : null;
+		} catch (err) {
 			logError(err);
 			return null;
 		}

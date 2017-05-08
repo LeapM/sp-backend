@@ -1,16 +1,11 @@
 import sql from 'mssql'
+import { OBJCOLUMN } from './constant'
 import { logError, logDebug } from '../utility'
+import { generateSPFTableName } from './utility'
 
 let objTableList = [];
 let domainTableMapping = {}
 let pool;
-const objColumn = `
-	[OBID] ,[DOMAINUID] ,[OBJUID] ,[OBJNAME],[OBJDEFUID] ,[CONFIG] ,[CREATIONDATE] ,[LASTUPDATED] ,[TERMINATIONDATE] ,[CREATIONUSER],[TERMINATIONUSER] ,[UNIQUEKEY] ,[CLAIMEDTOCONFIGS] ,[MARKEDFORREMOVAL] ,[DESCRIPTION]
-	`;
-
-function generateSPFTableName(prefix, type) {
-	return prefix + type;
-}
 
 function getRelTab(obj) {
 	let dataTable = domainTableMapping[obj.DOMAINUID];
@@ -28,9 +23,27 @@ function getRelTab(obj) {
 		}
 	}
 }
+
+function getPropTab(obj) {
+	let dataTable = domainTableMapping[obj.DOMAINUID];
+	if (dataTable) {
+		return dataTable.replace('OBJ', 'OBJPR');
+	} else {
+		//in case there is new domain table created
+		populateDomainTableMapping();
+		//rerun the
+		let dataTable = domainTableMapping[obj.DOMINUID];
+		if (dataTable) {
+			return dataTable.replace('OBJ', 'OBJPR');
+		} else {
+			return null;
+		}
+	}
+
+}
 async function populateDomainTableMapping() {
 	try {
-		let data = await sql.query `
+		let query = `
     SELECT o.OBJUID, p.STRVALUE as TABLEPREFIX
     FROM schemaOBJ o, schemarel r, schemaOBJ o1, SCHEMAOBJPR p
     WHERE o.OBJDEFUID like 'SPFDomain'and o.DOMAINUID = r.DOMAINUID2 and o.OBJUID = r.UID2
@@ -43,6 +56,8 @@ async function populateDomainTableMapping() {
     AND r.TERMINATIONDATE = '9999/12/31-23:59:59:999'
     AND p.TERMINATIONDATE = '9999/12/31-23:59:59:999'
   `;
+
+		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length > 0) {
 			domainTableMapping = {};
 			let tableSet = new Set();
@@ -69,7 +84,7 @@ async function createPool() {
 }
 
 export async function getPool() {
-	return await createPool();
+	await createPool();
 }
 
 export async function runQuery(query) {
@@ -93,9 +108,9 @@ export async function getObjByUIDAndDomain(uid, domain) {
 			if (!dataTable) return null;
 		}
 		let query = `
-		SELECT ${objColumn}
+		SELECT ${OBJCOLUMN}
 		FROM ${dataTable}
-		WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}'
+		WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}' and TERMINATIONDATE = '9999/12/31-23:59:59:999'
 		`;
 		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length === 1) {
@@ -105,20 +120,45 @@ export async function getObjByUIDAndDomain(uid, domain) {
 		logError(err);
 	}
 }
+export async function getPropertyByPropDefUID(obid, propDef) {
+	try {
+		let sourceObj = await getObjByOBID(obid)
+		if (sourceObj) {
+			let propTab = getPropTab(sourceObj);
+			if (!propTab) return;
+			let query = ` 
+				SELECT p.STRVALUE, p.CREATIONDATE
+				FROM  ${propTab} p 
+			  WHERE p.OBJOBID = '${obid}' and p.PROPERTYDEFUID = '${propDef}'
+				AND TERMINATIONDATE= '9999/12/31-23:59:59:999'
+				`;
+		  console.log(query);
+			let property = await runQuery(query);
+			console.log(property);
+			if (property && property.recordset && property.recordset.length === 1) {
+				return property.recordset[0].STRVALUE
+			}
+		}
+	} catch (err) {
+		logError(err);
+	}
+}
 export async function getObjByOBID(id) {
 	try {
-		//make sure the database is connected
+		//to make sure the getPool is called to fill the objTableList;
 		await getPool();
 		let tabSelectLists = objTableList.map((tab) =>
-			`select ${objColumn}
-      from ${tab} where obid = '${id}'
+			`SELECT ${OBJCOLUMN}
+      FROM ${tab} where obid = '${id}'
       `);
 		let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
 		let query = tabSelectUnion;
 		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length === 1) {
 			return data.recordset[0];
-		} else return null;
+		} else {
+			return null;
+		}
 	} catch (err) {
 		logError(err);
 	}
@@ -149,15 +189,15 @@ export async function getRelatedObjByOBIDAndRelDef(id, reldef) {
 			if (!relTab) return;
 			let query = ` 
 				SELECT r.${endUid} AS OBJUID, r.${endDomain} as DOMAINUID 
-				FROM  datarel r
+				FROM  ${relTab} r
 			  WHERE r.${startUid} = '${sourceObj.OBJUID}' and r.${startDomain} = '${sourceObj.DOMAINUID}'
 				`;
 			let anotherEndData = await runQuery(query);
 			if (anotherEndData && anotherEndData.recordset) {
 				let result = [];
-				for(let i in anotherEndData.recordset) {
+				for (let i in anotherEndData.recordset) {
 					result.push(await getObjByUIDAndDomain(anotherEndData.recordset[i].OBJUID,
-					anotherEndData.recordset[i].DOMAINUID));
+						anotherEndData.recordset[i].DOMAINUID));
 				}
 				return result;
 			}

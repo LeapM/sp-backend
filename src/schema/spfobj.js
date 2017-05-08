@@ -1,7 +1,14 @@
-import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInterfaceType } from 'graphql'
-export const SPFObjType = new GraphQLInterfaceType({
+import {
+	GraphQLSchema,
+	GraphQLObjectType,
+	GraphQLString,
+	GraphQLInterfaceType,
+	GraphQLList,
+	GraphQLNonNull
+} from 'graphql'
+let SPFObjType = new GraphQLInterfaceType({
 	name: 'SPFObjType',
-	fields: {
+	fields: () => ({
 		obid: { type: GraphQLString },
 		objuid: { type: GraphQLString },
 		objname: { type: GraphQLString },
@@ -15,6 +22,24 @@ export const SPFObjType = new GraphQLInterfaceType({
 		claimedtoconfigs: { type: GraphQLString },
 		markedforremoval: { type: GraphQLString },
 		description: { type: GraphQLString },
-		spfrevstate: { type: GraphQLString }
-	},
-})
+		spfrevstate: { type: GraphQLString },
+		getProp:{
+			type:GraphQLString,
+			args:{
+				propdefuid:{
+					type:new GraphQLNonNull(GraphQLString)
+				}
+			}
+		},
+		relatedobjs: {
+			type: new GraphQLList(SPFObjType),
+			args: {
+				reldefuid: {
+					type: new GraphQLNonNull(GraphQLString)
+				}
+			}
+		}
+	})
+});
+
+export { SPFObjType };

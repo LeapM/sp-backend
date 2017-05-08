@@ -1,5 +1,5 @@
 import sql from 'mssql'
-import { OBJCOLUMN } from './constant'
+import { OBJCOLUMN,TERMINATIONDATE} from './constant'
 import { logError, logDebug } from '../utility'
 import { generateSPFTableName } from './utility'
 
@@ -51,10 +51,10 @@ async function populateDomainTableMapping() {
     AND o1.OBID = p.OBJOBID
     AND p.PROPERTYDEFUID = 'SPFTablePrefix'
     AND r.defuid = 'SPFDomainGroupDomain'
-    AND o.TERMINATIONDATE = '9999/12/31-23:59:59:999'
-    AND o1.TERMINATIONDATE = '9999/12/31-23:59:59:999'
-    AND r.TERMINATIONDATE = '9999/12/31-23:59:59:999'
-    AND p.TERMINATIONDATE = '9999/12/31-23:59:59:999'
+    AND o.${TERMINATIONDATE}
+    AND o1.${TERMINATIONDATE}
+    AND r.${TERMINATIONDATE}
+    AND p.${TERMINATIONDATE}
   `;
 
 		let data = await runQuery(query);
@@ -110,7 +110,7 @@ export async function getObjByUIDAndDomain(uid, domain) {
 		let query = `
 		SELECT ${OBJCOLUMN}
 		FROM ${dataTable}
-		WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}' and TERMINATIONDATE = '9999/12/31-23:59:59:999'
+		WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}' and ${TERMINATIONDATE}
 		`;
 		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length === 1) {
@@ -130,7 +130,7 @@ export async function getPropertyByPropDefUID(obid, propDef) {
 				SELECT p.STRVALUE, p.CREATIONDATE
 				FROM  ${propTab} p 
 			  WHERE p.OBJOBID = '${obid}' and p.PROPERTYDEFUID = '${propDef}'
-				AND TERMINATIONDATE= '9999/12/31-23:59:59:999'
+				AND ${TERMINATIONDATE}
 				`;
 			let property = await runQuery(query);
 			if (property && property.recordset && property.recordset.length === 1) {
@@ -189,6 +189,7 @@ export async function getRelatedObjByOBIDAndRelDef(id, reldef) {
 				SELECT r.${endUid} AS OBJUID, r.${endDomain} as DOMAINUID 
 				FROM  ${relTab} r
 			  WHERE r.${startUid} = '${sourceObj.OBJUID}' and r.${startDomain} = '${sourceObj.DOMAINUID}'
+				AND r.defuid = '${reldef}'
 				`;
 			let anotherEndData = await runQuery(query);
 			if (anotherEndData && anotherEndData.recordset) {

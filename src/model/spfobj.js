@@ -87,7 +87,6 @@ export class SPFObj {
 			} else if (this.isDocRev()) {
 				const data = await getRelatedObjByOBIDAndRelDef(this.obid, '-SPFDocumentRevisions');
 				if (!data || data.length === 0) return null;
-				console.log(data);
 				const canSee = SPFObj.checkCanSee(viewer, data);
 				return canSee ? new SPFObj(data[0]) : null;
 			} else if (this.isDocVer()) {

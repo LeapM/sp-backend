@@ -67,9 +67,9 @@ export class SPFObj {
 	}
 	async getDocRev(viewer, rest) {
 		try {
-			const docMaster = this.getDocMaster();
+			const docMaster = await this.getDocMaster();
 			if (docMaster) {
-				const data = await getRelatedObjByOBIDAndRelDef(this.obid, 'SPFDocumentRevisions');
+				const data = await getRelatedObjByOBIDAndRelDef(docMaster.obid, 'SPFDocumentRevisions');
 				if (!data || data.length === 0) return null;
 				const canSee = SPFObj.checkCanSee(viewer, data);
 				return canSee ? data.map((rec) => new SPFObj(rec)) : null;

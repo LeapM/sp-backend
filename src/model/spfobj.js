@@ -1,4 +1,5 @@
-import { getObjByOBID, getRelatedObjByOBIDAndRelDef, getPropertyByPropDefUID } from '../dal'
+import { getObjByOBID, getRelatedObjByOBIDAndRelDef, getPropertyByPropDefUID,getObjByUIDAndDomain,
+getObjByName } from '../dal'
 import { logError, logDebug } from '../utility'
 
 export class SPFObj {
@@ -26,6 +27,19 @@ export class SPFObj {
 			if (!data) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? new SPFObj(data) : null;
+		} catch (err) {
+			logError(err);
+			return null;
+		}
+	}
+	static async genByName(viewer, name,rest) {
+		try {
+			const data = await getObjByName(name, rest);
+			if (!data || data.lenghth === 0) return null;
+			const canSee = SPFObj.checkCanSee(viewer, data);
+			return canSee ? (() => (
+				data.map((rec) => new SPFObj(rec))
+			))() : null;
 		} catch (err) {
 			logError(err);
 			return null;

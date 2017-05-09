@@ -1,5 +1,5 @@
 import sql from 'mssql'
-import { OBJCOLUMN,TERMINATIONDATE} from './constant'
+import { OBJCOLUMN, TERMINATIONDATE } from './constant'
 import { logError, logDebug } from '../utility'
 import { generateSPFTableName } from './utility'
 
@@ -115,6 +115,51 @@ export async function getObjByUIDAndDomain(uid, domain) {
 		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length === 1) {
 			return data.recordset[0];
+		} else return null;
+	} catch (err) {
+		logError(err);
+	}
+}
+export async function getObjByName(name, rest) {
+	try {
+		//make sure the database is connected
+		let dataTable;
+		if (rest && rest.domain) {
+			dataTable = domainTableMapping[rest.domain];
+			if (!dataTable) {
+				populateDomainTableMapping();
+				dataTable = domainTableMapping[rest.domain];
+				if (!dataTable) return null;
+			}
+		}
+		let whereClause;
+		if (rest && rest.domain) {
+			whereClause = `WHERE OBJNAME Like '${name}' and DOMAINUID = '${rest.domain}' and ${TERMINATIONDATE}`
+		} else {
+			whereClause = `WHERE OBJNAME Like '${name}' and ${TERMINATIONDATE}`
+		}
+		if(rest && rest.classdef){
+			whereClause = `${whereClause} and OBJDEFUID = '${rest.classdef}'`
+		}
+		let query;
+		if (dataTable) {
+			query = `
+				SELECT ${OBJCOLUMN}
+				FROM ${dataTable}
+				${whereClause}
+		`;
+		} else {
+			let tabSelectLists = objTableList.map((tab) =>
+				`SELECT ${OBJCOLUMN}
+      FROM ${tab} ${whereClause}
+      `);
+			let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
+			query = tabSelectUnion;
+		}
+		console.log(query);
+		let data = await runQuery(query);
+		if (data && data.recordset && data.recordset.length > 0) {
+			return data.recordset;
 		} else return null;
 	} catch (err) {
 		logError(err);

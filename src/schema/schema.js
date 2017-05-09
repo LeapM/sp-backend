@@ -9,6 +9,7 @@ import {
 import { SPFObj } from '../model'
 import { SPFObjType } from './spfobj'
 import { SimpleObjectType } from './simpleObjectType'
+import { DocObjectType } from './docObjectType'
 const QueryType = new GraphQLObjectType({
 	name: 'RootQueryType',
 	fields: {
@@ -50,6 +51,6 @@ const QueryType = new GraphQLObjectType({
 
 export default new GraphQLSchema({
 	//types is required to list all possible class implementing interface, maybe for better validating
-	types: [SimpleObjectType, SPFObjType],
+	types: [DocObjectType, SimpleObjectType, SPFObjType],
 	query: QueryType
 });

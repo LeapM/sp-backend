@@ -156,7 +156,6 @@ export async function getObjByName(name, rest) {
 			let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
 			query = tabSelectUnion;
 		}
-		console.log(query);
 		let data = await runQuery(query);
 		if (data && data.recordset && data.recordset.length > 0) {
 			return data.recordset;
@@ -226,6 +225,11 @@ export async function getRelatedObjByOBIDAndRelDef(id, reldef) {
 			endUid = 'uid2';
 			endDomain = 'domainuid2';
 		}
+
+		if(reldef.startsWith('-') || reldef.startsWith('+')){
+			reldef = reldef.substring(1);
+		}
+
 		let sourceObj = await getObjByOBID(id)
 		if (sourceObj) {
 			let relTab = getRelTab(sourceObj);

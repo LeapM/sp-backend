@@ -1,7 +1,7 @@
 import { GraphQLObjectType, GraphQLString, GraphQLList, GraphQLNonNull } from 'graphql'
 import { SPFObjType } from './spfobj'
-export const SimpleObjectType = new GraphQLObjectType({
-	name: 'SimpleObjectType',
+export const DocObjectType = new GraphQLObjectType({
+	name: 'DocObjectType',
 	interfaces: [SPFObjType],
 	fields: {
 		obid: { type: GraphQLString },
@@ -44,9 +44,24 @@ export const SimpleObjectType = new GraphQLObjectType({
 					.catch(() => null);
 			}
 		},
+		docrev:{
+			type: new GraphQLList(SPFObjType),
+			resolve(parent,args,context){
+				return parent.getDocRev(context,args)
+				.then((data)=>data)
+				.catch(()=>null);
+			}
+
+		},
+		docmaster: {
+			type: SPFObjType,
+			resolve(parent,args,context){
+				return parent.getDocMaster(context)
+				.then((data)=>data)
+				.catch(()=>null);
+			}
+		}
 	},
 	//this functionality is required, or the interface need to implement resolveType method
-	isTypeOf: (value) => {
-		return value.isSimpleObj();
-	}
+	isTypeOf: (value) => !value.isSimpleObj() 
 })

@@ -41,8 +41,8 @@ const QueryType = new GraphQLObjectType({
 					type: GraphQLString
 				}
 			},
-			resolve(parent, {name, ...rest}, context) {
-				return SPFObj.genByName(context,name, rest)
+			resolve(parent, { name, ...rest }, context) {
+				return SPFObj.genByName(context, name, rest)
 					.then((data) => data);
 			}
 		}

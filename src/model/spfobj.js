@@ -1,10 +1,3 @@
-import {
-	getObjByOBID,
-	getRelatedObjByOBIDAndRelDef,
-	getPropertyByPropDefUID,
-	getObjByUIDAndDomain,
-	getObjByName
-} from '../dal'
 import { logError, logDebug } from '../utility'
 
 export class SPFObj {
@@ -42,7 +35,7 @@ export class SPFObj {
 	}
 	async getPropVal(viewer, propdef) {
 		try {
-			const data = await getPropertyByPropDefUID(this.obid, propdef);
+			const data = await viwer.DAL.getPropertyByPropDefUID(this.obid, propdef);
 			if (!data) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? data : null;
@@ -54,7 +47,7 @@ export class SPFObj {
 	}
 	async getRelatedObj(viewer, reldef) {
 		try {
-			const data = await getRelatedObjByOBIDAndRelDef(this.obid, reldef);
+			const data = await viwer.DAL.getRelatedObjByOBIDAndRelDef(this.obid, reldef);
 			if (!data || data.length == 0) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? (() => (
@@ -69,7 +62,7 @@ export class SPFObj {
 		try {
 			const docMaster = await this.getDocMaster();
 			if (docMaster) {
-				const data = await getRelatedObjByOBIDAndRelDef(docMaster.obid, 'SPFDocumentRevisions');
+				const data = await viewer.DAL.getRelatedObjByOBIDAndRelDef(docMaster.obid, 'SPFDocumentRevisions');
 				if (!data || data.length === 0) return null;
 				const canSee = SPFObj.checkCanSee(viewer, data);
 				return canSee ? data.map((rec) => new SPFObj(rec)) : null;
@@ -85,15 +78,15 @@ export class SPFObj {
 			if (this.isDocMaster()) {
 				return this;
 			} else if (this.isDocRev()) {
-				const data = await getRelatedObjByOBIDAndRelDef(this.obid, '-SPFDocumentRevisions');
+				const data = await viewer.DAL.getRelatedObjByOBIDAndRelDef(this.obid, '-SPFDocumentRevisions');
 				if (!data || data.length === 0) return null;
 				const canSee = SPFObj.checkCanSee(viewer, data);
 				return canSee ? new SPFObj(data[0]) : null;
 			} else if (this.isDocVer()) {
-				const revData = await getRelatedObjByOBIDAndRelDef(this.obid, '-SPFRevisionVersions');
+				const revData = await viewer.DAL.getRelatedObjByOBIDAndRelDef(this.obid, '-SPFRevisionVersions');
 				if (!revData || revData.length === 0) return null;
 				const rev = new SPFObj(revData[0]);
-				const data = await getRelatedObjByOBIDAndRelDef(rev.obid, '-SPFDocumentRevisions');
+				const data = await viewer.DAL.getRelatedObjByOBIDAndRelDef(rev.obid, '-SPFDocumentRevisions');
 				if (!data || data.length === 0) return null;
 				const canSee = SPFObj.checkCanSee(viewer, data);
 				return canSee ? new SPFObj(data[0]) : null;
@@ -111,7 +104,7 @@ export class SPFObj {
 	 */
 	static async gen(viewer, id) {
 		try {
-			const data = await getObjByOBID(id)
+			const data = await viewer.DAL.getObjByOBID(id)
 			//simulate slow connection
 			//await new Promise((resolve)=>(setTimeout(()=>(resolve()),2000)));
 			if (!data) return null;
@@ -124,7 +117,7 @@ export class SPFObj {
 	}
 	static async genByName(viewer, name, rest) {
 		try {
-			const data = await getObjByName(name, rest);
+			const data = await viewer.DAL.getObjByName(name, rest);
 			if (!data || data.lenghth === 0) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? (() => (

@@ -3,36 +3,27 @@ import { OBJCOLUMN, TERMINATIONDATE } from './constant'
 import { logError, logDebug } from '../utility'
 import { generateSPFTableName } from './utility'
 
-let objTableList = [];
-let domainTableMapping = {}
-let pool;
+class DAL {
+	constructor(pool) {
+		//store all objtable's name for generate union join
+		this.objTableList = [];
+		//mapping between domain and tableset. When domain is known, select
+		this.domainTableMapping = {}
+		this.pool = pool;
+	}
 
-function getRelTab(obj) {
-	let dataTable = domainTableMapping[obj.DOMAINUID];
-	if (dataTable) {
-		return dataTable.replace('OBJ', 'REL');
-	} else {
-		//in case there is new domain table created
-		populateDomainTableMapping();
-		//rerun the
-		let dataTable = domainTableMapping[obj.DOMINUID];
+	getRelTab(obj) {
+		let dataTable = this.domainTableMapping[obj.DOMAINUID];
 		if (dataTable) {
 			return dataTable.replace('OBJ', 'REL');
 		} else {
 			return null;
 		}
 	}
-}
 
-function getPropTab(obj) {
-	let dataTable = domainTableMapping[obj.DOMAINUID];
-	if (dataTable) {
-		return dataTable.replace('OBJ', 'OBJPR');
-	} else {
-		//in case there is new domain table created
-		populateDomainTableMapping();
-		//rerun the
-		let dataTable = domainTableMapping[obj.DOMINUID];
+
+	getPropTab(obj) {
+		let dataTable = this.domainTableMapping[obj.DOMAINUID];
 		if (dataTable) {
 			return dataTable.replace('OBJ', 'OBJPR');
 		} else {
@@ -40,10 +31,11 @@ function getPropTab(obj) {
 		}
 	}
 
-}
-async function populateDomainTableMapping() {
-	try {
-		let query = `
+
+	async populateDomainTableMapping() {
+		logDebug('call populatedomiantablemapping');
+		try {
+			let query = `
     SELECT o.OBJUID, p.STRVALUE as TABLEPREFIX
     FROM schemaOBJ o, schemarel r, schemaOBJ o1, SCHEMAOBJPR p
     WHERE o.OBJDEFUID like 'SPFDomain'and o.DOMAINUID = r.DOMAINUID2 and o.OBJUID = r.UID2
@@ -57,200 +49,193 @@ async function populateDomainTableMapping() {
     AND p.${TERMINATIONDATE}
   `;
 
-		let data = await runQuery(query);
-		if (data && data.recordset && data.recordset.length > 0) {
-			domainTableMapping = {};
-			let tableSet = new Set();
-			data.recordset.forEach((rec) => {
-				domainTableMapping[rec.OBJUID] = generateSPFTableName(rec.TABLEPREFIX, 'OBJ');
-				tableSet.add(domainTableMapping[rec.OBJUID]);
-			});
-			objTableList = Array.from(tableSet);
+			let data = await this.runQuery(query);
+			if (data && data.recordset && data.recordset.length > 0) {
+				this.domainTableMapping = {};
+				let tableSet = new Set();
+				data.recordset.forEach((rec) => {
+					this.domainTableMapping[rec.OBJUID] = generateSPFTableName(rec.TABLEPREFIX, 'OBJ');
+					tableSet.add(this.domainTableMapping[rec.OBJUID]);
+				});
+				this.objTableList = Array.from(tableSet);
+			}
+		} catch (err) {
+			logError(err);
 		}
-	} catch (err) {
-		logError(err);
+
 	}
 
-}
-async function createPool() {
-	if (!pool) {
+	async runQuery(query) {
 		try {
-			pool = await sql.connect(process.env.sql_conn);
-			await populateDomainTableMapping();
+			//make sure the database is connected
+			if (!this.pool.connected) {
+				await this.pool.connect();
+				await this.populateDomainTableMapping();
+			}
+			logDebug(query);
+			return await this.pool.request().query(query);
 		} catch (err) {
 			logError(err);
 		}
 	}
-}
 
-export async function getPool() {
-	await createPool();
-}
-
-export async function runQuery(query) {
-	try {
-		//make sure the database is connected
-		await getPool();
-		const request = new sql.Request();
-		return await request.query(query);
-	} catch (err) {
-		logError(err);
-	}
-}
-
-export async function getObjByUIDAndDomain(uid, domain) {
-	try {
-		//make sure the database is connected
-		let dataTable = domainTableMapping[domain];
-		if (!dataTable) {
-			populateDomainTableMapping();
-			dataTable = domainTableMapping[domain];
-			if (!dataTable) return null;
-		}
-		let query = `
-		SELECT ${OBJCOLUMN}
-		FROM ${dataTable}
-		WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}' and ${TERMINATIONDATE}
-		`;
-		let data = await runQuery(query);
-		if (data && data.recordset && data.recordset.length === 1) {
-			return data.recordset[0];
-		} else return null;
-	} catch (err) {
-		logError(err);
-	}
-}
-export async function getObjByName(name, rest) {
-	try {
-		//make sure the database is connected
-		let dataTable;
-		if (rest && rest.domain) {
-			dataTable = domainTableMapping[rest.domain];
+	async getObjByUIDAndDomain(uid, domain) {
+		try {
+			//make sure the database is connected
+			let dataTable = this.domainTableMapping[domain];
 			if (!dataTable) {
-				populateDomainTableMapping();
-				dataTable = domainTableMapping[rest.domain];
+				await this.populateDomainTableMapping();
+				dataTable = domainTableMapping[domain];
 				if (!dataTable) return null;
 			}
+			let query = `
+			SELECT ${OBJCOLUMN}
+			FROM ${dataTable}
+			WHERE OBJUID = '${uid}' and DOMAINUID = '${domain}' and ${TERMINATIONDATE}
+			`;
+			let data = await this.runQuery(query);
+			if (data && data.recordset && data.recordset.length === 1) {
+				return data.recordset[0];
+			} else return null;
+		} catch (err) {
+			logError(err);
 		}
-		let whereClause;
-		if (rest && rest.domain) {
-			whereClause = `WHERE OBJNAME Like '${name}' and DOMAINUID = '${rest.domain}' and ${TERMINATIONDATE}`
-		} else {
-			whereClause = `WHERE OBJNAME Like '${name}' and ${TERMINATIONDATE}`
-		}
-		if(rest && rest.classdef){
-			whereClause = `${whereClause} and OBJDEFUID = '${rest.classdef}'`
-		}
-		let query;
-		if (dataTable) {
-			query = `
+	}
+	async getObjByName(name, rest) {
+		try {
+			let dataTable;
+			if (rest && rest.domain) {
+				dataTable = this.domainTableMapping[rest.domain];
+				if (!dataTable) {
+					await this.populateDomainTableMapping();
+					dataTable = this.domainTableMapping[rest.domain];
+					if (!dataTable) return null;
+				}
+			}
+			let whereClause;
+			if (rest && rest.domain) {
+				whereClause = `WHERE OBJNAME Like '${name}' and DOMAINUID = '${rest.domain}' and ${TERMINATIONDATE}`
+			} else {
+				whereClause = `WHERE OBJNAME Like '${name}' and ${TERMINATIONDATE}`
+			}
+			if (rest && rest.classdef) {
+				whereClause = `${whereClause} and OBJDEFUID = '${rest.classdef}'`
+			}
+			let query;
+			if (dataTable) {
+				query = `
 				SELECT ${OBJCOLUMN}
 				FROM ${dataTable}
 				${whereClause}
 		`;
-		} else {
-			let tabSelectLists = objTableList.map((tab) =>
-				`SELECT ${OBJCOLUMN}
+			} else {
+				let tabSelectLists = this.objTableList.map((tab) =>
+					`SELECT ${OBJCOLUMN}
       FROM ${tab} ${whereClause}
       `);
-			let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
-			query = tabSelectUnion;
+				let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
+				query = tabSelectUnion;
+			}
+			let data = await this.runQuery(query);
+			if (data && data.recordset && data.recordset.length > 0) {
+				return data.recordset;
+			} else return null;
+		} catch (err) {
+			logError(err);
 		}
-		let data = await runQuery(query);
-		if (data && data.recordset && data.recordset.length > 0) {
-			return data.recordset;
-		} else return null;
-	} catch (err) {
-		logError(err);
 	}
-}
-export async function getPropertyByPropDefUID(obid, propDef) {
-	try {
-		let sourceObj = await getObjByOBID(obid)
-		if (sourceObj) {
-			let propTab = getPropTab(sourceObj);
-			if (!propTab) return;
-			let query = ` 
+	async getPropertyByPropDefUID(obid, propDef) {
+		try {
+			let sourceObj = await getObjByOBID(obid)
+			if (sourceObj) {
+				let propTab = getPropTab(sourceObj);
+				if (!propTab) return;
+				let query = ` 
 				SELECT p.STRVALUE, p.CREATIONDATE
 				FROM  ${propTab} p 
 			  WHERE p.OBJOBID = '${obid}' and p.PROPERTYDEFUID = '${propDef}'
 				AND ${TERMINATIONDATE}
 				`;
-			let property = await runQuery(query);
-			if (property && property.recordset && property.recordset.length === 1) {
-				return property.recordset[0].STRVALUE
+				let property = await runQuery(query);
+				if (property && property.recordset && property.recordset.length === 1) {
+					return property.recordset[0].STRVALUE
+				}
 			}
+		} catch (err) {
+			logError(err);
 		}
-	} catch (err) {
-		logError(err);
 	}
-}
-export async function getObjByOBID(id) {
-	try {
-		//to make sure the getPool is called to fill the objTableList;
-		await getPool();
-		let tabSelectLists = objTableList.map((tab) =>
-			`SELECT ${OBJCOLUMN}
+	async getObjByOBID(id) {
+		try {
+			//to make sure the getPool is called to fill the objTableList;
+			await getPool();
+			let tabSelectLists = this.objTableList.map((tab) =>
+				`SELECT ${OBJCOLUMN}
       FROM ${tab} where obid = '${id}'
       `);
-		let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
-		let query = tabSelectUnion;
-		let data = await runQuery(query);
-		if (data && data.recordset && data.recordset.length === 1) {
-			return data.recordset[0];
-		} else {
-			return null;
+			let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
+			let query = tabSelectUnion;
+			let data = await this.runQuery(query);
+			if (data && data.recordset && data.recordset.length === 1) {
+				return data.recordset[0];
+			} else {
+				return null;
+			}
+		} catch (err) {
+			logError(err);
 		}
-	} catch (err) {
-		logError(err);
 	}
-}
 
-export async function getRelatedObjByOBIDAndRelDef(id, reldef) {
-	try {
-		//make sure the database is connected
-		let startUid;
-		let startDomain;
-		let endUid;
-		let endDomain;
+	async getRelatedObjByOBIDAndRelDef(id, reldef) {
+		try {
+			//make sure the database is connected
+			let startUid;
+			let startDomain;
+			let endUid;
+			let endDomain;
 
-		if (reldef.startsWith('-')) {
-			startUid = 'uid2';
-			startDomain = 'domainuid2';
-			endUid = 'uid1';
-			endDomain = 'domainuid1';
-		} else {
-			startUid = 'uid1';
-			startDomain = 'domainuid1';
-			endUid = 'uid2';
-			endDomain = 'domainuid2';
-		}
+			if (reldef.startsWith('-')) {
+				startUid = 'uid2';
+				startDomain = 'domainuid2';
+				endUid = 'uid1';
+				endDomain = 'domainuid1';
+			} else {
+				startUid = 'uid1';
+				startDomain = 'domainuid1';
+				endUid = 'uid2';
+				endDomain = 'domainuid2';
+			}
 
-		if(reldef.startsWith('-') || reldef.startsWith('+')){
-			reldef = reldef.substring(1);
-		}
+			if (reldef.startsWith('-') || reldef.startsWith('+')) {
+				reldef = reldef.substring(1);
+			}
 
-		let sourceObj = await getObjByOBID(id)
-		if (sourceObj) {
-			let relTab = getRelTab(sourceObj);
-			if (!relTab) return;
-			let query = ` 
+			let sourceObj = await this.getObjByOBID(id)
+			if (sourceObj) {
+				let relTab = this.getRelTab(sourceObj);
+				if (!relTab) return;
+				let query = ` 
 				SELECT r.${endUid} AS OBJUID, r.${endDomain} as DOMAINUID 
 				FROM  ${relTab} r
 			  WHERE r.${startUid} = '${sourceObj.OBJUID}' and r.${startDomain} = '${sourceObj.DOMAINUID}'
-				AND r.defuid = '${reldef}'
-				`;
-			let anotherEndData = await runQuery(query);
-			if (anotherEndData && anotherEndData.recordset) {
-				let result = [];
-				for (let i in anotherEndData.recordset) {
-					result.push(await getObjByUIDAndDomain(anotherEndData.recordset[i].OBJUID,
-						anotherEndData.recordset[i].DOMAINUID));
+			ND r.defuid = '${reldef}'
+		`;
+				let anotherEndData = await runQuery(query);
+				if (anotherEndData && anotherEndData.recordset) {
+					let result = [];
+					for (let i in anotherEndData.recordset) {
+						result.push(await getObjByUIDAndDomain(anotherEndData.recordset[i].OBJUID,
+							anotherEndData.recordset[i].DOMAINUID));
+					}
+					return result;
 				}
-				return result;
 			}
+		} catch (err) {
+			logError(err);
+
 		}
-	} catch (err) {
-		logError(err);
 	}
 }
+
+
+export { DAL };

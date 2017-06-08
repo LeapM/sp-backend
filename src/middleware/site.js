@@ -8,12 +8,12 @@ export function addSite(req, res, next) {
 	res.send('hell world from site');
 }
 export function getSite(req, res, next) {
-	res.json(global.spfSites);
+	res.json(req.spfSites);
 }
 
 export const addSPFSiteToHeader = (req, res, next) => {
 	if (req.params.site) {
-		let site = req.spfSites.find((site) => site.spfName.toUpperCase() === req.params.site.toUpperCase());
+		let site = req.spfSites.find((site) => site.name.toUpperCase() === req.params.site.toUpperCase());
 		if (site) {
 			req.DAL = site.DAL;
 			next();

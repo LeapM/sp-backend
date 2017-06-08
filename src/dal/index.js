@@ -31,9 +31,13 @@ class DAL {
 		}
 	}
 
-
+	async init() {
+		if (this.objTableList.length == 0) {
+			//this should be called before all query function to make sure that domain table is sync
+			await this.populateDomainTableMapping();
+		}
+	}
 	async populateDomainTableMapping() {
-		logDebug('call populatedomiantablemapping');
 		try {
 			let query = `
     SELECT o.OBJUID, p.STRVALUE as TABLEPREFIX
@@ -72,7 +76,6 @@ class DAL {
 				await this.pool.connect();
 				await this.populateDomainTableMapping();
 			}
-			logDebug(query);
 			return await this.pool.request().query(query);
 		} catch (err) {
 			logError(err);
@@ -81,6 +84,7 @@ class DAL {
 
 	async getObjByUIDAndDomain(uid, domain) {
 		try {
+			await this.init();
 			//make sure the database is connected
 			let dataTable = this.domainTableMapping[domain];
 			if (!dataTable) {
@@ -103,6 +107,8 @@ class DAL {
 	}
 	async getObjByName(name, rest) {
 		try {
+			//the init should be called everytime before query
+			await this.init();
 			let dataTable;
 			if (rest && rest.domain) {
 				dataTable = this.domainTableMapping[rest.domain];
@@ -168,7 +174,7 @@ class DAL {
 	async getObjByOBID(id) {
 		try {
 			//to make sure the getPool is called to fill the objTableList;
-			await getPool();
+			await this.init();
 			let tabSelectLists = this.objTableList.map((tab) =>
 				`SELECT ${OBJCOLUMN}
       FROM ${tab} where obid = '${id}'
@@ -188,6 +194,7 @@ class DAL {
 
 	async getRelatedObjByOBIDAndRelDef(id, reldef) {
 		try {
+			await this.init();
 			//make sure the database is connected
 			let startUid;
 			let startDomain;
@@ -218,13 +225,13 @@ class DAL {
 				SELECT r.${endUid} AS OBJUID, r.${endDomain} as DOMAINUID 
 				FROM  ${relTab} r
 			  WHERE r.${startUid} = '${sourceObj.OBJUID}' and r.${startDomain} = '${sourceObj.DOMAINUID}'
-			ND r.defuid = '${reldef}'
+				AND r.defuid = '${reldef}'
 		`;
-				let anotherEndData = await runQuery(query);
+				let anotherEndData = await this.runQuery(query);
 				if (anotherEndData && anotherEndData.recordset) {
 					let result = [];
 					for (let i in anotherEndData.recordset) {
-						result.push(await getObjByUIDAndDomain(anotherEndData.recordset[i].OBJUID,
+						result.push(await this.getObjByUIDAndDomain(anotherEndData.recordset[i].OBJUID,
 							anotherEndData.recordset[i].DOMAINUID));
 					}
 					return result;

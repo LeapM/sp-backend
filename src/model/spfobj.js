@@ -47,7 +47,7 @@ export class SPFObj {
 	}
 	async getRelatedObj(viewer, reldef) {
 		try {
-			const data = await viwer.DAL.getRelatedObjByOBIDAndRelDef(this.obid, reldef);
+			const data = await viewer.DAL.getRelatedObjByOBIDAndRelDef(this.obid, reldef);
 			if (!data || data.length == 0) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? (() => (

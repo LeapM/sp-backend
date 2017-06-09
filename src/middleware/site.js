@@ -24,8 +24,7 @@ export function addSite(req, res, next) {
 }
 
 export function getSite(req, res, next) {
-	console.log(req.spfSites);
-	res.json(req.spfSites);
+	res.json(formatSPFSite(req.spfSites));
 }
 
 export const addSPFSiteToHeader = (req, res, next) => {
@@ -74,13 +73,17 @@ function initialzeDALForSite(site) {
 
 function syncSPFSite(cb) {
 	if (global.spfSites) {
-		let sites = global.spfSites.map(site => ({
-			name: site.name,
-			server: site.server,
-			database: site.database,
-			user: site.user,
-			password: site.password
-		}))
+		let sites = formatSPFSite(global.spfSites);
 		fs.writeFile(getDBPath(), JSON.stringify(sites, null, '    '), cb);
 	} else(cb());
+}
+
+function formatSPFSite(sites) {
+	return sites.map(site => ({
+		name: site.name,
+		server: site.server,
+		database: site.database,
+		user: site.user,
+		password: site.password
+	}))
 }

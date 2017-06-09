@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "nodemon src/app.js --exec babel-node",
 		"debug": "nodemon src/app.js --exec babel-node debug",
-		"build": "rm -rf dist && mkdir dist && babel src -d dist -s",
+		"build": "rm -rf dist && mkdir dist && cp .env dist/ && babel src -d dist -s",
 		"serve": "node src/app.js",
 		"test": "mocha --compilers js:babel-register"
 	},

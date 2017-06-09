@@ -60,7 +60,9 @@ app.get('/api/testpool/:times', (req, res) => {
 	testConnectPool(req.params.times);
 	res.send('total time: ' + (Date.now() - startTime));
 });
-
+app.get('/*', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
+});
 app.get('/', (req, res) => res.send('hello world'));
 app.listen(port, () => {
 	console.log(`listen on localhost:${port}`);

@@ -4,10 +4,10 @@
 	"description": "",
 	"main": "app.js",
 	"scripts": {
-		"start": "nodemon app.js --exec babel-node",
-		"debug": "nodemon app.js --exec babel-node debug",
+		"start": "nodemon src/app.js --exec babel-node",
+		"debug": "nodemon src/app.js --exec babel-node debug",
 		"build": "rm -rf dist && mkdir dist && babel src -d dist -s",
-		"serve": "node app.js",
+		"serve": "node src/app.js",
 		"test": "mocha --compilers js:babel-register"
 	},
 	"repository": {

@@ -58,7 +58,7 @@ export const initializeSiteCollection = (req, res, next) => {
 }
 
 function getDBPath() {
-	return path.join(__dirname, '..', 'db', 'db.json')
+	return path.join(__dirname, '..', '..', 'db', 'db.json')
 }
 
 function initialzeDALForSite(site) {

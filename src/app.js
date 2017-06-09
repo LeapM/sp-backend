@@ -61,7 +61,7 @@ app.get('/api/testpool/:times', (req, res) => {
 	res.send('total time: ' + (Date.now() - startTime));
 });
 app.get('/*', (req, res) => {
-	res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
+	res.sendFile(path.resolve(__dirname, '..', 'build', 'index.html'));
 });
 app.get('/', (req, res) => res.send('hello world'));
 app.listen(port, () => {

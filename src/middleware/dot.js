@@ -6,7 +6,6 @@ export const generateDot = (req, res, next) => {
 	let map = {};
 	if (req.body && req.body && req.body.steps) {
 		let data = req.body;
-		console.log(data);
 		for (let n of data.steps) {
 			if (!map[n.objuid]) {
 				map[n.objuid] = g.addNode(n.objname);

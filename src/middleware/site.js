@@ -5,7 +5,6 @@ import path from 'path';
 
 let spfSites;
 export function addSite(req, res, next) {
-	console.log(req.body);
 	if (global.spfSites && req.body && req.body.site) {
 		initialzeDALForSite(req.body.site);
 		req.body.site.DAL.pool.connect((err) => {
@@ -25,6 +24,7 @@ export function addSite(req, res, next) {
 }
 
 export function getSite(req, res, next) {
+	console.log(req.spfSites);
 	res.json(req.spfSites);
 }
 

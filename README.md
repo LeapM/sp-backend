@@ -1,4 +1,5 @@
-# node-template
-starting point of node project
+# SmartPlant Foundation Backend 
 
-inspired by [example-node-server](https://github.com/babel/example-node-server)
+This is Backend to retrieve SmartPlant Foundation Database information
+
+It supports readonly

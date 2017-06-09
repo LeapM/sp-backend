@@ -4,9 +4,8 @@ import fs from 'fs';
 export const generateDot = (req, res, next) => {
 	let g = graphviz.digraph("G");
 	let map = {};
-	console.log(req.body);
-	if (req.body && req.body.data && req.body.data.steps) {
-		let data = req.body.data;
+	if (req.body && req.body && req.body.steps) {
+		let data = req.body;
 		console.log(data);
 		for (let n of data.steps) {
 			if (!map[n.objuid]) {

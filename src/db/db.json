@@ -1,7 +1,16 @@
-[{
-	"name": "South Flank",
-	"server": "auper1-doc002",
-	"database": "SPF16SFData",
-	"user": "sa",
-	"password": "manager"
-}]
+[
+    {
+        "name": "South Flank",
+        "server": "auper1-doc002",
+        "database": "SPF16SFData",
+        "user": "sa",
+        "password": "manager"
+    },
+    {
+        "name": "dd",
+        "server": "auper1-doc002",
+        "database": "spf16sfdata",
+        "user": "sa",
+        "password": "manager"
+    }
+]

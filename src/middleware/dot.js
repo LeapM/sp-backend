@@ -28,15 +28,35 @@ export const generateDot = (req, res, next) => {
 		}
 
 		g.setGraphVizPath(process.env.GRAPHVIZPATH);
-		let file = path.join(__dirname, '..', '..', 'build/graph', data.obid + '.png');
-		console.log(file);
-		g.output('png', (graph) => {
-			fs.writeFile(file, graph, (err) => {
-				if (err) return next('fail to generate');
-				return res.json({ path: '/graph/' + data.obid + '.png' });
+		getGraphFolder.then((folder => {
+			let file = path.join(folder, data.obid + '.png');
+			g.output('png', (graph) => {
+				fs.writeFile(file, graph, (err) => {
+					if (err) return next('fail to generate');
+					return res.json({ path: '/graph/' + data.obid + '.png' });
+				});
 			});
-		});
+		})).catch((err) => {
+			return next('fail to create folder');
+		})
 	} else {
 		return next('invalid request');
 	}
 }
+
+let getGraphFolder = new Promise((resolve, reject) => {
+	let dir = path.join(__dirname, '..', '..', 'build/graph');
+	fs.exists(dir, (exist) => {
+		if (exist) {
+			resolve(dir)
+		} else {
+			fs.mkdir(dir, (err) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(dir);
+				}
+			});
+		}
+	})
+})

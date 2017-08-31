@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "app.js",
 	"scripts": {
-		"start": "nodemon src/app.js --exec babel-node",
+		"start": "nodemon src/app.js --exec babel-node --ignore db/",
 		"debug": "nodemon src/app.js --exec babel-node debug",
 		"build": "rm -rf dist && mkdir dist && cp .env dist/ && babel src -d dist -s",
 		"serve": "node src/app.js",

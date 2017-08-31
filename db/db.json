@@ -1,13 +1,13 @@
 [
     {
-        "name": "South Flank",
+        "name": "SouthFlankProd",
         "server": "auper1-doc002",
-        "database": "SPF16SFData",
+        "database": "spfsfproddata",
         "user": "sa",
         "password": "manager"
     },
     {
-        "name": "dd",
+        "name": "test",
         "server": "auper1-doc002",
         "database": "spf16sfdata",
         "user": "sa",

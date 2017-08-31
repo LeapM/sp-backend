@@ -142,6 +142,7 @@ class DAL {
 				let tabSelectUnion = tabSelectLists.join(' union ').trim('union');
 				query = tabSelectUnion;
 			}
+			!process.env.NODE_ENV ? console.log(query) : '';
 			let data = await this.runQuery(query);
 			if (data && data.recordset && data.recordset.length > 0) {
 				return data.recordset;
@@ -152,9 +153,9 @@ class DAL {
 	}
 	async getPropertyByPropDefUID(obid, propDef) {
 		try {
-			let sourceObj = await getObjByOBID(obid)
+			let sourceObj = await this.getObjByOBID(obid)
 			if (sourceObj) {
-				let propTab = getPropTab(sourceObj);
+				let propTab = this.getPropTab(sourceObj);
 				if (!propTab) return;
 				let query = ` 
 				SELECT p.STRVALUE, p.CREATIONDATE
@@ -162,7 +163,8 @@ class DAL {
 			  WHERE p.OBJOBID = '${obid}' and p.PROPERTYDEFUID = '${propDef}'
 				AND ${TERMINATIONDATE}
 				`;
-				let property = await runQuery(query);
+				console.log(query);
+				let property = await this.runQuery(query);
 				if (property && property.recordset && property.recordset.length === 1) {
 					return property.recordset[0].STRVALUE
 				}

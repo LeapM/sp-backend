@@ -35,7 +35,7 @@ export class SPFObj {
 	}
 	async getPropVal(viewer, propdef) {
 		try {
-			const data = await viwer.DAL.getPropertyByPropDefUID(this.obid, propdef);
+			const data = await viewer.DAL.getPropertyByPropDefUID(this.obid, propdef);
 			if (!data) return null;
 			const canSee = SPFObj.checkCanSee(viewer, data);
 			return canSee ? data : null;

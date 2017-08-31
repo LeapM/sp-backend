@@ -10,6 +10,7 @@ import { logError, logDebug } from './utility';
 import {
 	getSite,
 	addSite,
+	deleteSite,
 	addSPFSiteToHeader,
 	initializeSiteCollection,
 	generateDot
@@ -48,6 +49,7 @@ app.use('/:site/graphql', addSPFSiteToHeader, graphqlHTTP(request => {
 }));
 app.get('/api/site', getSite);
 app.post('/api/site', addSite);
+app.delete('/api/site/:site', deleteSite, getSite);
 app.post('/api/generatedotgraph', generateDot);
 app.get('/api/test/:times', async(req, res) => {
 	const startTime = Date.now();

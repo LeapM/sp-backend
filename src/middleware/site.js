@@ -6,11 +6,20 @@ import path from 'path';
 let spfSites;
 export function addSite(req, res, next) {
 	if (global.spfSites && req.body && req.body.site) {
+		console.log(req.body.site);
 		initialzeDALForSite(req.body.site);
 		req.body.site.DAL.pool.connect((err) => {
 			if (err) {
+				//_error is general error for redux-form
 				console.log(err);
-				return next('fail to connect');
+				return res.status(400).json({ _error: "fail to connect to the SPF site" });
+			}
+			//check if the site exist already
+			for (let n in global.spfSites) {
+				if (global.spfSites[n].name === req.body.site.name) {
+					global.spfSites.splice(n, 1);
+					break;
+				}
 			}
 			global.spfSites.push(req.body.site);
 			syncSPFSite((err) => {
@@ -23,6 +32,22 @@ export function addSite(req, res, next) {
 	}
 }
 
+export function deleteSite(req, res, next) {
+	if (global.spfSites && req.params.site) {
+		for (let n in global.spfSites) {
+			if (global.spfSites[n].name === req.params.site) {
+				global.spfSites.splice(n, 1);
+				break;
+			}
+		}
+		syncSPFSite((err) => {
+			if (err) { return next('fail to save'); }
+			next();
+		});
+	} else {
+		next('invalid request');
+	}
+}
 export function getSite(req, res, next) {
 	res.json(formatSPFSite(req.spfSites));
 }
